@@ -4,6 +4,7 @@
   "version": "2.0.0-beta.12",
   "main": "dist/hyperapp.js",
   "module": "src/index.js",
+  "type": "module",
   "license": "MIT",
   "repository": "jorgebucaran/hyperapp",
   "homepage": "https://github.com/jorgebucaran/hyperapp",
