@@ -5,11 +5,7 @@ var EMPTY_OBJ = {}
 var EMPTY_ARR = []
 var map = EMPTY_ARR.map
 var isArray = Array.isArray
-var nextFrame = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : setTimeout
-var nextTask =
-  typeof Promise == "function"
-    ? Promise.resolve().then.bind(Promise.resolve())
-    : nextFrame
+var defer = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : setTimeout
 
 var createClass = function(obj) {
   var out = ""
@@ -438,10 +434,13 @@ export var app = function(props, enhance) {
 
   var setState = function(newState) {
     if (state !== newState) {
-      if (subscriptions) nextTask(subscribe)
-      if (view && !lock) nextFrame(render, (lock = true))
+      state = newState
+      if (subscriptions) {
+        subs = patchSubs(subs, batch([subscriptions(state)]), dispatch)
+      }
+      if (view && !lock) defer(render, (lock = true))
     }
-    return (state = newState)
+    return state
   }
 
   var dispatch = (enhance ||
@@ -463,10 +462,6 @@ export var app = function(props, enhance) {
           state)
       : setState(action)
   })
-
-  var subscribe = function() {
-    subs = patchSubs(subs, batch([subscriptions(state)]), dispatch)
-  }
 
   var render = function() {
     lock = false
