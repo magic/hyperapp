@@ -1,5 +1,7 @@
 # [Hyperapp](https://hyperapp.dev) [![npm](https://img.shields.io/npm/v/hyperapp.svg?label=&color=0080FF)](https://github.com/jorgebucaran/hyperapp/releases/latest)
 
+**This is a fork for magic. unless you need .mjs files, use [hyperapp upstream](https://github.com/jorgebucaran/hyperapp) instead.**
+
 > The tiny framework for building web interfaces.
 
 - **Do more with less**—We have minimized the concepts you need to learn to be productive. Views, actions, effects, and subscriptions are all pretty easy to get to grips with and work together seamlessly.
