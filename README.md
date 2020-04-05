@@ -1,6 +1,8 @@
-# [Hyperapp](https://hyperapp.dev) [![npm](https://img.shields.io/npm/v/hyperapp.svg?label=&color=0080FF)](https://github.com/jorgebucaran/hyperapp/releases/latest)
+# YOU DO NOT WANT THIS PACKAGE!
 
-**This is a fork for magic. unless you need .mjs files, use [hyperapp upstream](https://github.com/jorgebucaran/hyperapp) instead.**
+**This is a fork for magic. use [hyperapp upstream](https://github.com/jorgebucaran/hyperapp) instead.**
+
+# [Hyperapp](https://hyperapp.dev) [![npm](https://img.shields.io/npm/v/hyperapp.svg?label=&color=0080FF)](https://github.com/jorgebucaran/hyperapp/releases/latest)
 
 > The tiny framework for building web interfaces.
 
