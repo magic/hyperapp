@@ -36,6 +36,6 @@
     "testmatrix": "^0.1.2",
     "jsdom": "16.2.2",
     "rollup": "*",
-    "terser": "^4.6.11"
+    "terser": "^4.6.12"
   }
 }
