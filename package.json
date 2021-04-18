@@ -21,10 +21,8 @@
     "vdom"
   ],
   "scripts": {
-    "test": "t -p"
-  },
-  "dependencies": {
-    "hyperapp-render": "3.5.0"
+    "test": "t -p",
+    "format": "f -w -e docs"
   },
   "devDependencies": {
     "@magic/format": "0.0.22",
