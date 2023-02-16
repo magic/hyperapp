@@ -23,14 +23,14 @@ npm i hyperapp
 Then with a module bundler like [Parcel](https://parceljs.org) or [Webpack](https://webpack.js.org) import it in your application and get right down to business.
 
 ```js
-import { h, app } from "hyperapp"
+import { h, app } from 'hyperapp'
 ```
 
 Don't want to set up a build step? Import Hyperapp in a `<script>` tag as a module. Don't worry; modules are supported in all evergreen, self-updating desktop, and mobile browsers.
 
 ```html
 <script type="module">
-  import { h, app } from "https://unpkg.com/hyperapp"
+  import { h, app } from 'https://unpkg.com/hyperapp'
 </script>
 ```
 
@@ -41,17 +41,17 @@ Here's the first example to get you started: a counter that can go up or down. Y
 <html lang="en">
   <head>
     <script type="module">
-      import { h, app } from "https://unpkg.com/hyperapp"
+      import { h, app } from 'https://unpkg.com/hyperapp'
 
       app({
         init: 0,
         view: state =>
-          h("main", {}, [
-            h("h1", {}, state),
-            h("button", { onClick: state => state - 1 }, "-"),
-            h("button", { onClick: state => state + 1 }, "+")
+          h('main', {}, [
+            h('h1', {}, state),
+            h('button', { onClick: state => state - 1 }, '-'),
+            h('button', { onClick: state => state + 1 }, '+'),
           ]),
-        node: document.getElementById("app")
+        node: document.getElementById('app'),
       })
     </script>
   </head>
