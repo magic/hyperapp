@@ -25,7 +25,7 @@
     "format": "f -w -e docs"
   },
   "devDependencies": {
-    "@magic/format": "0.0.39",
-    "@magic/test": "0.2.9"
+    "@magic/format": "0.0.51",
+    "@magic/test": "0.2.16"
   }
 }
