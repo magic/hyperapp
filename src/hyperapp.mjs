@@ -91,7 +91,7 @@ var patchProperty = function (node, key, oldValue, newValue, listener, isSvg) {
     } else if (!oldValue) {
       node.addEventListener(key, listener)
     }
-  } else if (!isSvg && key !== 'list' && key in node) {
+  } else if (!isSvg && key !== 'list' && key !== 'children' && key in node) {
     node[key] = newValue == null ? '' : newValue
   } else if (
     newValue == null ||
@@ -99,7 +99,7 @@ var patchProperty = function (node, key, oldValue, newValue, listener, isSvg) {
     (key === 'class' && !(newValue = createClass(newValue)))
   ) {
     node.removeAttribute(key)
-  } else {
+  } else if (key !== 'children') {
     node.setAttribute(key, newValue)
   }
 }
@@ -111,8 +111,8 @@ var createNode = function (vdom, listener, isSvg) {
     vdom.type === TEXT_NODE
       ? document.createTextNode(vdom.name)
       : (isSvg = isSvg || vdom.name === 'svg')
-      ? document.createElementNS(ns, vdom.name, { is: props.is })
-      : document.createElement(vdom.name, { is: props.is })
+        ? document.createElementNS(ns, vdom.name, { is: props.is })
+        : document.createElement(vdom.name, { is: props.is })
 
   for (var k in props) {
     patchProperty(node, k, null, props[k], listener, isSvg)
@@ -379,13 +379,13 @@ export var app = function (props) {
     typeof action === 'function'
       ? dispatch(action(state, props))
       : isArray(action)
-      ? typeof action[0] === 'function' || isArray(action[0])
-        ? dispatch(action[0], typeof action[1] === 'function' ? action[1](props) : action[1])
-        : (batch(action.slice(1)).map(function (fx) {
-            fx && fx[0](dispatch, fx[1])
-          }, setState(action[0])),
-          state)
-      : setState(action),
+        ? typeof action[0] === 'function' || isArray(action[0])
+          ? dispatch(action[0], typeof action[1] === 'function' ? action[1](props) : action[1])
+          : (batch(action.slice(1)).map(function (fx) {
+              fx && fx[0](dispatch, fx[1])
+            }, setState(action[0])),
+            state)
+        : setState(action),
   )
 
   var render = function () {
