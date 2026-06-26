@@ -6,7 +6,10 @@
   "module": "src/index.mjs",
   "type": "module",
   "license": "MIT",
-  "repository": "jorgebucaran/hyperapp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/magic/hyperapp.git"
+  },
   "homepage": "https://hyperapp.dev",
   "files": [
     "src",
