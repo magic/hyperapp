@@ -28,7 +28,8 @@
     "format": "f -w -e docs"
   },
   "devDependencies": {
-    "@magic/format": "0.0.74",
-    "@magic/test": "0.2.30"
+    "@magic/format": "0.0.79",
+    "@magic/lint": "0.0.5",
+    "@magic/test": "0.3.56"
   }
 }
