@@ -16,7 +16,7 @@ type EventsMap = { [K in keyof HTMLElementEventMap as `on${K}`]: HTMLElementEven
 } & { onsearch: Event }
 
 // Indexable values are able to use subscripting.
-type Indexable = string | unknown[] | Record<string, unknown>
+export type Indexable = string | unknown[] | Record<string, unknown>
 
 // This validates plain objects while invalidating array objects and string
 // objects by disallowing numerical indexing.
