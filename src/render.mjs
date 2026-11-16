@@ -28,6 +28,12 @@ const voidElements = new Set([
 ])
 
 // credits to https://github.com/component/escape-html
+/**
+ *
+ *
+ * @param {string | number} value
+ * @returns {string}
+ */
 export const escapeHtml = value => {
   const str = '' + value
   if (typeof value === 'number') {
@@ -77,6 +83,12 @@ export const escapeHtml = value => {
 }
 
 // credits to https://github.com/jorgebucaran/classcat
+/**
+ *
+ *
+ * @param {string | number | (string | number)[] | Record<string, string | number>} value
+ * @returns {string | number}
+ */
 export const concatClassNames = value => {
   if (typeof value === 'string' || typeof value === 'number') {
     return value || ''
@@ -108,7 +120,12 @@ export const concatClassNames = value => {
 // "backgroundColor" => "background-color"
 // "MozTransition" => "-moz-transition"
 // "msTransition" => "-ms-transition"
-const hyphenateStyleName = styleName => {
+/**
+ *
+ * @param {string} styleName
+ * @returns {string}
+ */
+export const hyphenateStyleName = styleName => {
   if (!styleNameCache.has(styleName)) {
     const name = styleName.replace(uppercasePattern, '-$&').toLowerCase().replace(msPattern, '-ms-')
 
@@ -119,6 +136,11 @@ const hyphenateStyleName = styleName => {
   return styleNameCache.get(styleName)
 }
 
+/**
+ *
+ * @param {Record<string, string>} style
+ * @returns {string}
+ */
 export const stringifyStyles = style => {
   let out = ''
   let delimiter = ''
@@ -142,6 +164,16 @@ export const stringifyStyles = style => {
 }
 
 // https://www.w3.org/TR/html51/syntax.html#serializing-html-fragments
+
+/**
+ *
+ *
+ * @param {string} name
+ * @param {Record<string, string | number | boolean>} props
+ * @param {*} children
+ * @param {*} stack
+ * @returns
+ */
 const renderFragment = (name, props, children, stack) => {
   let out = ''
   let footer = ''
@@ -151,6 +183,7 @@ const renderFragment = (name, props, children, stack) => {
 
     for (let prop in props) {
       if (hasOwnProperty.call(props, prop)) {
+        /** @type {string | number | boolean} */
         let value = props[prop]
 
         if (
@@ -162,7 +195,11 @@ const renderFragment = (name, props, children, stack) => {
         ) {
           if (prop === 'class' || prop === 'className') {
             prop = 'class'
-            value = concatClassNames(value) || false
+            if (typeof value !== 'string' || typeof value !== 'number') {
+              value = false
+            } else {
+              value = concatClassNames(value) || false
+            }
           } else if (prop === 'style' && typeof value === 'object') {
             value = stringifyStyles(value) || false
           }
@@ -205,6 +242,14 @@ const renderFragment = (name, props, children, stack) => {
   return out
 }
 
+/**
+ *
+ *
+ * @param {*} node
+ * @param {*} state
+ * @param {*} actions
+ * @returns
+ */
 const resolveNode = (node, state, actions) => {
   if (typeof node === 'function') {
     return resolveNode(node(state, actions), state, actions)
@@ -215,6 +260,14 @@ const resolveNode = (node, state, actions) => {
   return node
 }
 
+/**
+ *
+ *
+ * @param {*} view
+ * @param {*} state
+ * @param {*} actions
+ * @returns
+ */
 export const renderer = (view, state, actions) => {
   const stack = [
     {
@@ -226,7 +279,7 @@ export const renderer = (view, state, actions) => {
 
   let end = false
 
-  return bytes => {
+  return (/** @type {number} */ bytes) => {
     if (end) {
       return null
     }
