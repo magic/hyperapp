@@ -26,7 +26,8 @@
   "scripts": {
     "test": "t -p",
     "format": "f -w -e docs",
-    "lint": "lint"
+    "lint": "lint",
+    "check": "lint"
   },
   "devDependencies": {
     "@magic/format": "0.0.80",
