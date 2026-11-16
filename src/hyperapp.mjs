@@ -1,25 +1,28 @@
-var RECYCLED_NODE = 1
-var LAZY_NODE = 2
-var TEXT_NODE = 3
-var EMPTY_OBJ = {}
-var EMPTY_ARR = []
-var map = EMPTY_ARR.map
-var isArray = Array.isArray
-var defer = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : setTimeout
+const SSR_NODE = 1
+const TEXT_NODE = 3
+const EMPTY_OBJ = {}
+const EMPTY_ARR = []
+const SVG_NS = 'http://www.w3.org/2000/svg'
 
-var createClass = function (obj) {
-  var out = ''
+const id = a => a
+const map = EMPTY_ARR.map
+const isArray = Array.isArray
 
-  if (typeof obj === 'string') return obj
+export const createClass = obj => {
+  let out = ''
 
-  if (isArray(obj) && obj.length > 0) {
-    for (var k = 0, tmp; k < obj.length; k++) {
-      if ((tmp = createClass(obj[k])) !== '') {
+  if (typeof obj === 'string') {
+    return obj
+  }
+
+  if (isArray(obj)) {
+    for (let k = 0, tmp; k < obj.length; k++) {
+      if ((tmp = createClass(obj[k]))) {
         out += (out && ' ') + tmp
       }
     }
   } else {
-    for (var k in obj) {
+    for (const k in obj) {
       if (obj[k]) {
         out += (out && ' ') + k
       }
@@ -29,44 +32,25 @@ var createClass = function (obj) {
   return out
 }
 
-var merge = function (a, b) {
-  var out = {}
-
-  for (var k in a) out[k] = a[k]
-  for (var k in b) out[k] = b[k]
-
-  return out
-}
-
-var batch = function (list) {
-  return list.reduce(function (out, item) {
-    return out.concat(
-      !item || item === true ? 0 : typeof item[0] === 'function' ? [item] : batch(item),
-    )
-  }, EMPTY_ARR)
-}
-
-var isSameAction = function (a, b) {
-  return isArray(a) && isArray(b) && a[0] === b[0] && typeof a[0] === 'function'
-}
-
-var shouldRestart = function (a, b) {
-  if (a !== b) {
-    for (var k in merge(a, b)) {
-      if (a[k] !== b[k] && !isSameAction(a[k], b[k])) return true
+export const shouldRestart = (a, b) => {
+  for (const k in { ...a, ...b }) {
+    if (typeof (isArray(a[k]) ? a[k][0] : a[k]) === 'function') {
       b[k] = a[k]
+    } else if (a[k] !== b[k]) {
+      return true
     }
   }
 }
 
-var patchSubs = function (oldSubs, newSubs, dispatch) {
-  for (var i = 0, oldSub, newSub, subs = []; i < oldSubs.length || i < newSubs.length; i++) {
+export const patchSubs = (oldSubs, newSubs = EMPTY_ARR, dispatch) => {
+  for (let subs = [], i = 0, oldSub, newSub; i < oldSubs.length || i < newSubs.length; i++) {
     oldSub = oldSubs[i]
     newSub = newSubs[i]
+
     subs.push(
-      newSub
+      newSub && newSub !== true
         ? !oldSub || newSub[0] !== oldSub[0] || shouldRestart(newSub[1], oldSub[1])
-          ? [newSub[0], newSub[1], newSub[0](dispatch, newSub[1]), oldSub && oldSub[2]()]
+          ? [newSub[0], newSub[1], (oldSub && oldSub[2](), newSub[0](dispatch, newSub[1]))]
           : oldSub
         : oldSub && oldSub[2](),
     )
@@ -74,10 +58,11 @@ var patchSubs = function (oldSubs, newSubs, dispatch) {
   return subs
 }
 
-var patchProperty = function (node, key, oldValue, newValue, listener, isSvg) {
-  if (key === 'key') {
-  } else if (key === 'style') {
-    for (var k in merge(oldValue, newValue)) {
+export const getKey = vdom => (vdom == null ? vdom : vdom.key)
+
+export const patchProperty = (node, key, oldValue, newValue, listener, isSvg) => {
+  if (key === 'style') {
+    for (const k in { ...oldValue, ...newValue }) {
       oldValue = newValue == null || newValue[k] == null ? '' : newValue[k]
       if (k[0] === '-') {
         node[key].setProperty(k, oldValue)
@@ -86,84 +71,80 @@ var patchProperty = function (node, key, oldValue, newValue, listener, isSvg) {
       }
     }
   } else if (key[0] === 'o' && key[1] === 'n') {
-    if (!((node.actions || (node.actions = {}))[(key = key.slice(2))] = newValue)) {
+    if (!((node.events || (node.events = {}))[(key = key.slice(2))] = newValue)) {
       node.removeEventListener(key, listener)
     } else if (!oldValue) {
       node.addEventListener(key, listener)
     }
-  } else if (!isSvg && key !== 'list' && key !== 'children' && key in node) {
+  } else if (!isSvg && key !== 'list' && key !== 'form' && key in node) {
     node[key] = newValue == null ? '' : newValue
-  } else if (
-    newValue == null ||
-    newValue === false ||
-    (key === 'class' && !(newValue = createClass(newValue)))
-  ) {
+  } else if (newValue == null || newValue === false) {
     node.removeAttribute(key)
-  } else if (key !== 'children') {
+  } else {
     node.setAttribute(key, newValue)
   }
 }
 
-var createNode = function (vdom, listener, isSvg) {
-  var ns = 'http://www.w3.org/2000/svg'
-  var props = vdom.props
-  var node =
-    vdom.type === TEXT_NODE
-      ? document.createTextNode(vdom.name)
-      : (isSvg = isSvg || vdom.name === 'svg')
-        ? document.createElementNS(ns, vdom.name, { is: props.is })
-        : document.createElement(vdom.name, { is: props.is })
+export const createNode = (vdom, listener, isSvg) => {
+  isSvg = isSvg || vdom.tag === 'svg'
 
-  for (var k in props) {
+  const props = vdom.props
+  const node =
+    vdom.type === TEXT_NODE
+      ? document.createTextNode(vdom.tag)
+      : isSvg
+        ? document.createElementNS(SVG_NS, vdom.tag, props.is && props)
+        : document.createElement(vdom.tag, props.is && props)
+
+  for (const k in props) {
     patchProperty(node, k, null, props[k], listener, isSvg)
   }
 
-  for (var i = 0, len = vdom.children.length; i < len; i++) {
-    node.appendChild(createNode((vdom.children[i] = getVNode(vdom.children[i])), listener, isSvg))
+  for (let i = 0; i < vdom.children.length; i++) {
+    node.appendChild(createNode((vdom.children[i] = maybeVNode(vdom.children[i])), listener, isSvg))
   }
 
   return (vdom.node = node)
 }
 
-var getKey = function (vdom) {
-  return vdom == null ? null : vdom.key
-}
-
-var patch = function (parent, node, oldVNode, newVNode, listener, isSvg) {
+export const patch = (parent, node, oldVNode, newVNode, listener, isSvg) => {
   if (oldVNode === newVNode) {
+    // intentionally empty
   } else if (oldVNode != null && oldVNode.type === TEXT_NODE && newVNode.type === TEXT_NODE) {
-    if (oldVNode.name !== newVNode.name) node.nodeValue = newVNode.name
-  } else if (oldVNode == null || oldVNode.name !== newVNode.name) {
-    node = parent.insertBefore(createNode((newVNode = getVNode(newVNode)), listener, isSvg), node)
+    if (oldVNode.tag !== newVNode.tag) {
+      node.nodeValue = newVNode.tag
+    }
+  } else if (oldVNode == null || oldVNode.tag !== newVNode.tag) {
+    node = parent.insertBefore(createNode((newVNode = maybeVNode(newVNode)), listener, isSvg), node)
     if (oldVNode != null) {
       parent.removeChild(oldVNode.node)
     }
   } else {
-    var tmpVKid
-    var oldVKid
+    let tmpVKid
+    let oldVKid
 
-    var oldKey
-    var newKey
+    let oldKey
+    let newKey
 
-    var oldVProps = oldVNode.props
-    var newVProps = newVNode.props
+    const oldProps = oldVNode.props
+    const newProps = newVNode.props
 
-    var oldVKids = oldVNode.children
-    var newVKids = newVNode.children
+    const oldVKids = oldVNode.children
+    const newVKids = newVNode.children
 
-    var oldHead = 0
-    var newHead = 0
-    var oldTail = oldVKids.length - 1
-    var newTail = newVKids.length - 1
+    let oldHead = 0
+    let newHead = 0
+    let oldTail = oldVKids.length - 1
+    let newTail = newVKids.length - 1
 
-    isSvg = isSvg || newVNode.name === 'svg'
+    isSvg = isSvg || newVNode.tag === 'svg'
 
-    for (var i in merge(oldVProps, newVProps)) {
+    for (const i in { ...oldProps, ...newProps }) {
       if (
-        (i === 'value' || i === 'selected' || i === 'checked' ? node[i] : oldVProps[i]) !==
-        newVProps[i]
+        (i === 'value' || i === 'selected' || i === 'checked' ? node[i] : oldProps[i]) !==
+        newProps[i]
       ) {
-        patchProperty(node, i, oldVProps[i], newVProps[i], listener, isSvg)
+        patchProperty(node, i, oldProps[i], newProps[i], listener, isSvg)
       }
     }
 
@@ -176,7 +157,7 @@ var patch = function (parent, node, oldVNode, newVNode, listener, isSvg) {
         node,
         oldVKids[oldHead].node,
         oldVKids[oldHead],
-        (newVKids[newHead] = getVNode(newVKids[newHead++], oldVKids[oldHead++])),
+        (newVKids[newHead] = maybeVNode(newVKids[newHead++], oldVKids[oldHead++])),
         listener,
         isSvg,
       )
@@ -191,7 +172,7 @@ var patch = function (parent, node, oldVNode, newVNode, listener, isSvg) {
         node,
         oldVKids[oldTail].node,
         oldVKids[oldTail],
-        (newVKids[newTail] = getVNode(newVKids[newTail--], oldVKids[oldTail--])),
+        (newVKids[newTail] = maybeVNode(newVKids[newTail--], oldVKids[oldTail--])),
         listener,
         isSvg,
       )
@@ -200,7 +181,7 @@ var patch = function (parent, node, oldVNode, newVNode, listener, isSvg) {
     if (oldHead > oldTail) {
       while (newHead <= newTail) {
         node.insertBefore(
-          createNode((newVKids[newHead] = getVNode(newVKids[newHead++])), listener, isSvg),
+          createNode((newVKids[newHead] = maybeVNode(newVKids[newHead++])), listener, isSvg),
           (oldVKid = oldVKids[oldHead]) && oldVKid.node,
         )
       }
@@ -209,7 +190,10 @@ var patch = function (parent, node, oldVNode, newVNode, listener, isSvg) {
         node.removeChild(oldVKids[oldHead++].node)
       }
     } else {
-      for (var i = oldHead, keyed = {}, newKeyed = {}; i <= oldTail; i++) {
+      const newKeyed = {}
+      const keyed = {}
+
+      for (let i = oldHead; i <= oldTail; i++) {
         if ((oldKey = oldVKids[i].key) != null) {
           keyed[oldKey] = oldVKids[i]
         }
@@ -217,7 +201,7 @@ var patch = function (parent, node, oldVNode, newVNode, listener, isSvg) {
 
       while (newHead <= newTail) {
         oldKey = getKey((oldVKid = oldVKids[oldHead]))
-        newKey = getKey((newVKids[newHead] = getVNode(newVKids[newHead], oldVKid)))
+        newKey = getKey((newVKids[newHead] = maybeVNode(newVKids[newHead], oldVKid)))
 
         if (newKeyed[oldKey] || (newKey != null && newKey === getKey(oldVKids[oldHead + 1]))) {
           if (oldKey == null) {
@@ -227,7 +211,7 @@ var patch = function (parent, node, oldVNode, newVNode, listener, isSvg) {
           continue
         }
 
-        if (newKey == null || oldVNode.type === RECYCLED_NODE) {
+        if (newKey == null || oldVNode.type === SSR_NODE) {
           if (oldKey == null) {
             patch(node, oldVKid && oldVKid.node, oldVKid, newVKids[newHead], listener, isSvg)
             newHead++
@@ -263,7 +247,7 @@ var patch = function (parent, node, oldVNode, newVNode, listener, isSvg) {
         }
       }
 
-      for (var i in keyed) {
+      for (const i in keyed) {
         if (newKeyed[i] == null) {
           node.removeChild(keyed[i].node)
         }
@@ -274,124 +258,98 @@ var patch = function (parent, node, oldVNode, newVNode, listener, isSvg) {
   return (newVNode.node = node)
 }
 
-var propsChanged = function (a, b) {
-  for (var k in a) if (a[k] !== b[k]) return true
-  for (var k in b) if (a[k] !== b[k]) return true
-}
-
-var getTextVNode = function (node) {
-  return typeof node === 'object' ? node : createTextVNode(node)
-}
-
-var getVNode = function (newVNode, oldVNode) {
-  return newVNode.type === LAZY_NODE
-    ? ((!oldVNode || !oldVNode.lazy || propsChanged(oldVNode.lazy, newVNode.lazy)) &&
-        ((oldVNode = getTextVNode(newVNode.lazy.view(newVNode.lazy))).lazy = newVNode.lazy),
-      oldVNode)
-    : newVNode
-}
-
-var createVNode = function (name, props, children, node, key, type) {
-  return {
-    name: name,
-    props: props,
-    children: children,
-    node: node,
-    type: type,
-    key: key,
+export const propsChanged = (a, b) => {
+  for (const k in a) {
+    if (a[k] !== b[k]) {
+      return true
+    }
+  }
+  for (const k in b) {
+    if (a[k] !== b[k]) {
+      return true
+    }
   }
 }
 
-var createTextVNode = function (value, node) {
-  return createVNode(value, EMPTY_OBJ, EMPTY_ARR, node, undefined, TEXT_NODE)
-}
+export const maybeVNode = (newVNode, oldVNode) =>
+  newVNode !== true && newVNode !== false && newVNode
+    ? typeof newVNode.tag === 'function'
+      ? ((!oldVNode || oldVNode.memo == null || propsChanged(oldVNode.memo, newVNode.memo)) &&
+          ((oldVNode = newVNode.tag(newVNode.memo)).memo = newVNode.memo),
+        oldVNode)
+      : newVNode
+    : text('')
 
-var recycleNode = function (node) {
-  return node.nodeType === TEXT_NODE
-    ? createTextVNode(node.nodeValue, node)
+export const recycleNode = node =>
+  node.nodeType === TEXT_NODE
+    ? text(node.nodeValue, node)
     : createVNode(
         node.nodeName.toLowerCase(),
         EMPTY_OBJ,
         map.call(node.childNodes, recycleNode),
+        SSR_NODE,
         node,
-        undefined,
-        RECYCLED_NODE,
       )
-}
 
-export var Lazy = function (props) {
-  return {
-    lazy: props,
-    type: LAZY_NODE,
-  }
-}
+export const createVNode = (tag, { key, ...props }, children, type, node) => ({
+  tag,
+  props,
+  key,
+  children,
+  type,
+  node,
+})
 
-export var h = function (name, props) {
-  for (var vdom, rest = [], children = [], i = arguments.length; i-- > 2; ) {
-    rest.push(arguments[i])
-  }
+export const memo = (tag, memo) => ({ tag, memo })
 
-  while (rest.length > 0) {
-    if (isArray((vdom = rest.pop()))) {
-      for (var i = vdom.length; i-- > 0; ) {
-        rest.push(vdom[i])
-      }
-    } else if (vdom === false || vdom === true || vdom == null) {
-    } else {
-      children.push(getTextVNode(vdom))
-    }
-  }
+export const text = (value, node) => createVNode(value, EMPTY_OBJ, EMPTY_ARR, TEXT_NODE, node)
 
-  props = props || EMPTY_OBJ
-
-  return typeof name === 'function'
-    ? name(props, children)
-    : createVNode(name, props, children, undefined, props.key)
-}
-
-export var app = function (props) {
-  var state = {}
-  var lock = false
-  var view = props.view
-  var node = props.node
-  var vdom = node && recycleNode(node)
-  var subscriptions = props.subscriptions
-  var subs = []
-
-  var listener = function (event) {
-    dispatch(this.actions[event.type], event)
-  }
-
-  var setState = function (newState) {
-    if (state !== newState) {
-      state = newState
-      if (subscriptions) {
-        subs = patchSubs(subs, batch([subscriptions(state)]), dispatch)
-      }
-      if (view && !lock) defer(render, (lock = true))
-    }
-    return state
-  }
-
-  const { middleware = o => o } = props
-
-  const dispatch = middleware((action, props) =>
-    typeof action === 'function'
-      ? dispatch(action(state, props))
-      : isArray(action)
-        ? typeof action[0] === 'function' || isArray(action[0])
-          ? dispatch(action[0], typeof action[1] === 'function' ? action[1](props) : action[1])
-          : (batch(action.slice(1)).map(function (fx) {
-              fx && fx[0](dispatch, fx[1])
-            }, setState(action[0])),
-            state)
-        : setState(action),
+export const h = (tag, { class: c, ...props }, children = EMPTY_ARR) =>
+  createVNode(
+    tag,
+    { ...props, ...(c ? { class: createClass(c) } : EMPTY_OBJ) },
+    isArray(children) ? children : [children],
   )
 
-  var render = function () {
-    lock = false
-    node = patch(node.parentNode, node, vdom, (vdom = getTextVNode(view(state))), listener)
+export const app = ({ node, view, subscriptions, dispatch = id, init = EMPTY_OBJ }) => {
+  let vdom = node && recycleNode(node)
+  let subs = []
+  let state
+  let busy
+
+  const update = newState => {
+    if (state !== newState) {
+      if ((state = newState) == null) {
+        dispatch = subscriptions = render = id
+      }
+      if (subscriptions) {
+        subs = patchSubs(subs, subscriptions(state), dispatch)
+      }
+      if (view && !busy) {
+        requestAnimationFrame(render, (busy = true))
+      }
+    }
   }
 
-  dispatch(props.init)
+  let render = () =>
+    (node = patch(node.parentNode, node, vdom, (vdom = view(state)), listener, (busy = false)))
+
+  const listener = function (event) {
+    dispatch(this.events[event.type], event)
+  }
+
+  return (
+    (dispatch = dispatch((action, props) =>
+      typeof action === 'function'
+        ? dispatch(action(state, props))
+        : isArray(action)
+          ? typeof action[0] === 'function'
+            ? dispatch(action[0], action[1])
+            : action
+                .slice(1)
+                .map(fx => fx && fx !== true && (fx[0] || fx)(dispatch, fx[1]), update(action[0]))
+          : update(action),
+    ))(init),
+    dispatch
+  )
 }
