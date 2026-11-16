@@ -1,35 +1,36 @@
 {
   "name": "@magic/hyperapp",
-  "description": "Fork of the tiny framework for building web interfaces. use hyperapp instead!",
   "version": "2.0.4-alpha.0.6",
-  "main": "src/index.mjs",
-  "module": "src/index.mjs",
-  "type": "module",
+  "description": "Fork of the tiny framework for building web interfaces. use hyperapp instead!",
+  "keywords": [
+    "framework",
+    "frontend",
+    "hyperapp",
+    "vdom",
+    "virtual dom"
+  ],
+  "homepage": "https://hyperapp.dev",
   "license": "MIT",
+  "author": "Jorge Bucaran",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/magic/hyperapp.git"
   },
-  "homepage": "https://hyperapp.dev",
   "files": [
     "src",
     "dist"
   ],
-  "author": "Jorge Bucaran",
-  "keywords": [
-    "hyperapp",
-    "frontend",
-    "framework",
-    "virtual dom",
-    "vdom"
-  ],
+  "type": "module",
+  "main": "src/index.mjs",
+  "module": "src/index.mjs",
   "scripts": {
     "test": "t -p",
-    "format": "f -w -e docs"
+    "format": "f -w -e docs",
+    "lint": "lint"
   },
   "devDependencies": {
-    "@magic/format": "0.0.79",
+    "@magic/format": "0.0.80",
     "@magic/lint": "0.0.5",
-    "@magic/test": "0.3.56"
+    "@magic/test": "0.3.57"
   }
 }
