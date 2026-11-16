@@ -23,15 +23,27 @@
   "type": "module",
   "main": "src/index.mjs",
   "module": "src/index.mjs",
+  "types": "src/hyperapp.d.mts",
+  "exports": {
+    ".": {
+      "types": "./src/hyperapp.d.mts",
+      "import": "./src/index.mjs"
+    },
+    "./render": {
+      "import": "./src/render.mjs"
+    }
+  },
   "scripts": {
-    "test": "t -p",
+    "test": "t",
     "format": "f -w -e docs",
     "lint": "lint",
-    "check": "lint"
+    "tsc": "tsc --noEmit",
+    "check": "npm run tsc && npm run lint"
   },
   "devDependencies": {
     "@magic/format": "0.0.80",
     "@magic/lint": "0.0.5",
-    "@magic/test": "0.3.57"
+    "@magic/test": "0.3.57",
+    "typescript": "npm:@typescript/typescript6"
   }
 }
