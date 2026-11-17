@@ -41,8 +41,8 @@
     "check": "npm run tsc && npm run lint"
   },
   "devDependencies": {
-    "@magic/format": "0.0.80",
-    "@magic/lint": "0.0.5",
+    "@magic/format": "0.0.82",
+    "@magic/lint": "0.0.6",
     "@magic/test": "0.3.57",
     "typescript": "npm:@typescript/typescript6"
   }
