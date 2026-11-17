@@ -1,5 +1,6 @@
 import type { Test } from '@magic/test'
 import { is } from '@magic/test'
+
 import {
   app,
   createClass,
