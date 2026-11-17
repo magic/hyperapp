@@ -43,7 +43,8 @@ export const shouldRestart = (a, b) => {
 }
 
 export const patchSubs = (oldSubs, newSubs = EMPTY_ARR, dispatch) => {
-  for (let subs = [], i = 0, oldSub, newSub; i < oldSubs.length || i < newSubs.length; i++) {
+  const subs = []
+  for (let i = 0, oldSub, newSub; i < oldSubs.length || i < newSubs.length; i++) {
     oldSub = oldSubs[i]
     newSub = newSubs[i]
 
