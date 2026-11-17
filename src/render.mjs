@@ -39,7 +39,7 @@ const voidElements = new Set([
  */
 
 /**
- * An inline-CSS mapping as accepted by this renderer.
+ * An inline-CSS mapping that this renderer accepts.
  * @typedef {Record<string, string | number | null>} StyleValue
  */
 
@@ -53,7 +53,7 @@ const voidElements = new Set([
  * A VNode object the renderer can turn into markup.
  *
  * This shape accepts the VNodes built by `h()` and `text()` (see
- * `hyperapp.d.mts`), memoized views (`memo()`), as well as the legacy
+ * `hyperapp.d.mts`), memoized views (`memo()`), along with the legacy
  * `name`/`nodeName`/`attributes` and lazy (`type: 2`) node shapes.
  * @template S
  * @typedef {object} RenderNode
