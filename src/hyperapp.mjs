@@ -7,11 +7,14 @@ const SVG_NS = 'http://www.w3.org/2000/svg'
 const id = a => a
 const map = EMPTY_ARR.map
 const isArray = Array.isArray
+const isStr = t => typeof t === 'string'
+const isNum = t => typeof t === 'number'
+const isFn = t => typeof t === 'function'
 
 export const createClass = obj => {
   let out = ''
 
-  if (typeof obj === 'string') {
+  if (isStr(obj)) {
     return obj
   }
 
@@ -34,7 +37,7 @@ export const createClass = obj => {
 
 export const shouldRestart = (a, b) => {
   for (const k in { ...a, ...b }) {
-    if (typeof (isArray(a[k]) ? a[k][0] : a[k]) === 'function') {
+    if (isFn(isArray(a[k]) ? a[k][0] : a[k])) {
       b[k] = a[k]
     } else if (a[k] !== b[k]) {
       return true
@@ -274,11 +277,13 @@ export const propsChanged = (a, b) => {
 
 export const maybeVNode = (newVNode, oldVNode) =>
   newVNode !== true && newVNode !== false && newVNode
-    ? typeof newVNode.tag === 'function'
+    ? isFn(newVNode.tag)
       ? ((!oldVNode || oldVNode.memo == null || propsChanged(oldVNode.memo, newVNode.memo)) &&
           ((oldVNode = newVNode.tag(newVNode.memo)).memo = newVNode.memo),
         oldVNode)
-      : newVNode
+      : isStr(newVNode) || isNum(newVNode)
+        ? text(newVNode)
+        : newVNode
     : text('')
 
 export const recycleNode = node =>
@@ -305,12 +310,25 @@ export const memo = (tag, memo) => ({ tag, memo })
 
 export const text = (value, node) => createVNode(value, EMPTY_OBJ, EMPTY_ARR, TEXT_NODE, node)
 
-export const h = (tag, { class: c, ...props }, children = EMPTY_ARR) =>
-  createVNode(
+export const textify = value => {
+  if (isArray(value)) {
+    return value.flat(Infinity).map(t => textify(t))
+  } else if (isStr(value) || isNum(value)) {
+    return text(value)
+  }
+
+  return value
+}
+
+export const h = (tag, { class: c, ...props }, children = EMPTY_ARR) => {
+  children = isArray(children) ? children : [children]
+
+  return createVNode(
     tag,
     { ...props, ...(c ? { class: createClass(c) } : EMPTY_OBJ) },
-    isArray(children) ? children : [children],
+    textify(children),
   )
+}
 
 export const app = ({ node, view, subscriptions, dispatch = id, init = EMPTY_OBJ }) => {
   let vdom = node && recycleNode(node)
@@ -341,10 +359,10 @@ export const app = ({ node, view, subscriptions, dispatch = id, init = EMPTY_OBJ
 
   return (
     (dispatch = dispatch((action, props) =>
-      typeof action === 'function'
+      isFn(action)
         ? dispatch(action(state, props))
         : isArray(action)
-          ? typeof action[0] === 'function'
+          ? isFn(action[0])
             ? dispatch(action[0], action[1])
             : action
                 .slice(1)
