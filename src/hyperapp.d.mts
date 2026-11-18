@@ -40,12 +40,12 @@ export function shouldRestart(a: Record<string, unknown>, b: Record<string, unkn
 // `patchSubs()` patches subscriptions between old and new arrays.
 export function patchSubs<S>(
   oldSubs: readonly Subscription<S>[],
-  newSubs: readonly Subscription<S>[],
-  dispatch: Dispatch<S>,
+  newSubs?: readonly (boolean | undefined | Subscription<S>)[],
+  dispatch?: Dispatch<S>,
 ): readonly Subscription<S>[]
 
 // `getKey()` returns the key of a VNode or the VNode itself if null/undefined.
-export function getKey(vdom: VNode<unknown> | null | undefined): string | null | undefined
+export function getKey(vdom: unknown | null | undefined): string | null | undefined
 
 // `patchProperty()` patches a DOM node property.
 export function patchProperty(
@@ -53,20 +53,24 @@ export function patchProperty(
   key: string,
   oldValue: unknown,
   newValue: unknown,
-  listener: EventListener,
+  listener: EventListener | null,
   isSvg: boolean,
 ): void
 
 // `createNode()` creates a DOM node from a VNode.
-export function createNode(vdom: VNode<unknown>, listener: EventListener, isSvg: boolean): Node
+export function createNode(
+  vdom: VNode<unknown>,
+  listener: EventListener | null,
+  isSvg: boolean,
+): Node
 
 // `patch()` patches a DOM node with new VNode children.
 export function patch(
   parent: Node,
-  node: Node,
+  node: Node | null,
   oldVNode: VNode<unknown> | null | undefined,
   newVNode: VNode<unknown>,
-  listener: EventListener,
+  listener: EventListener | null,
   isSvg: boolean,
 ): Node
 
@@ -77,7 +81,10 @@ export function propsChanged(
 ): boolean | undefined
 
 // `maybeVNode()` normalizes a value into a VNode.
-export function maybeVNode<S>(newVNode: MaybeVNode<S>, oldVNode?: VNode<S>): VNode<S>
+export function maybeVNode<S>(
+  newVNode: MaybeVNode<S> | string | number,
+  oldVNode?: VNode<S>,
+): VNode<S>
 
 // `recycleNode()` recycles a DOM node into a VNode.
 export function recycleNode(node: Node): VNode<unknown>
@@ -87,7 +94,7 @@ export function createVNode<S>(
   tag: string | ((data: unknown) => VNode<S>),
   props: Props<S>,
   children: readonly MaybeVNode<S>[],
-  type: 1 | 3,
+  type: 1 | 3 | undefined,
   node: Node | null | undefined,
 ): VNode<S>
 
@@ -95,14 +102,14 @@ export function createVNode<S>(
 export function h<S, C = unknown, T extends string = string>(
   tag: NonEmptyString<T>,
   props: CustomPayloads<S, C> & Props<S>,
-  children?: MaybeVNode<S> | readonly MaybeVNode<S>[],
+  children?: Children<S>,
 ): ElementVNode<S>
 
 // `memo()` stores a view along with any given data for it.
 export function memo<S, D extends Indexable = Indexable>(
   view: (data: D) => VNode<S>,
   data: D,
-): VNode<S>
+): ElementVNode<S>
 
 // `text()` creates a virtual DOM node representing plain text.
 export function text<T = unknown>(
@@ -120,7 +127,7 @@ export interface TypedH<S> {
   <_ extends never, C = unknown, T extends string = string>(
     tag: NonEmptyString<T>,
     props: CustomPayloads<S, C> & Props<S>,
-    children?: MaybeVNode<S> | readonly MaybeVNode<S>[],
+    children?: Children<S>,
   ): ElementVNode<S>
 }
 
@@ -176,6 +183,7 @@ export type Dispatch<S> = (dispatchable: Dispatchable<S>, payload?: unknown) => 
 // A dispatchable entity is used to cause a state transition.
 export type Dispatchable<S, P = unknown> =
   | S
+  | null
   | [state: S, ...effects: MaybeEffect<S, P>[]]
   | Action<S, P>
   | readonly [action: Action<S, P>, payload: P]
@@ -198,6 +206,9 @@ export type EventActions<S> = {
 
 // In certain places a virtual DOM node can be made optional.
 export type MaybeVNode<S> = boolean | null | undefined | VNode<S>
+
+// Nested child lists are flattened by `h()` before storage.
+export type Children<S> = MaybeVNode<S> | string | number | readonly Children<S>[]
 
 // Virtual DOM properties will often correspond to HTML attributes.
 export type Props<S> = Readonly<
@@ -234,22 +245,23 @@ export type StyleProp = IndexableByKey & {
 export type Subscription<S, P = unknown> = readonly [
   subscriber: (dispatch: Dispatch<S>, payload: P) => Unsubscribe,
   payload: P,
+  unsubscribe?: Unsubscribe | null,
 ]
 
 // An unsubscribe function cleans up a canceled subscription.
-export type Unsubscribe = () => void
+export type Unsubscribe = () => void;
 
 // A virtual DOM node (a.k.a. VNode) represents an actual DOM element.
 export type ElementVNode<S> = {
   readonly props: Props<S>
-  readonly children: readonly MaybeVNode<S>[]
+  readonly children: readonly VNode<S>[]
   node: null | undefined | Node
 
   // Hyperapp takes care of using native Web platform event handlers for us.
-  events?: Record<string, Action<S> | readonly [action: Action<S>, payload: unknown]>
+  events?: Record<string, Action<S> | readonly [action: Action<S>, payload: unknown] | null>
 
   // A key can uniquely associate a VNode with a certain DOM element.
-  readonly key: string | null | undefined
+  readonly key?: string | null | undefined
 
   // A VNode's tag is either an element name or a memoized view function.
   readonly tag: string | ((data: Indexable) => VNode<S>)
@@ -265,7 +277,7 @@ export type ElementVNode<S> = {
   // objects apart from `Props` objects. Since we don't expect users to make
   // their own VNodes manually, we can take advantage of this trick which
   // is unique to TypeScript type definitions for JavaScript code.
-  _VNode: true
+  _VNode?: true
 }
 
 // Certain VNodes specifically represent Text nodes and don't rely on state.
@@ -273,10 +285,13 @@ export type TextVNode = {
   readonly props: Record<PropertyKey, never>
   readonly children: []
   node: null | undefined | Node
-  readonly key: undefined
-  readonly tag: string
-  readonly type: 3
-  _VNode: true
+  readonly key?: undefined
+  readonly tag: string | number
+  readonly type: 3 | number
+  // Text nodes never carry a memo, but exposing the property keeps `.memo`
+  // accessible when a value is a union of `VNode` types.
+  readonly memo?: Indexable
+  _VNode?: true
 }
 
 // VNodes may represent either Text or Element nodes.
