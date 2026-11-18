@@ -31,6 +31,66 @@ type NonEmptyString<T> = T extends '' ? never : T
 // effecters and subscribers are allowed to have side effects.
 export function app<S>(props: App<S>): Dispatch<S>
 
+// `createClass()` concatenates class names from a string, array, or object.
+export function createClass(obj: unknown): string
+
+// `shouldRestart()` checks whether any value in two objects changed.
+export function shouldRestart(a: Record<string, unknown>, b: Record<string, unknown>): boolean
+
+// `patchSubs()` patches subscriptions between old and new arrays.
+export function patchSubs<S>(
+  oldSubs: readonly Subscription<S>[],
+  newSubs: readonly Subscription<S>[],
+  dispatch: Dispatch<S>,
+): readonly Subscription<S>[]
+
+// `getKey()` returns the key of a VNode or the VNode itself if null/undefined.
+export function getKey(vdom: VNode<unknown> | null | undefined): string | null | undefined
+
+// `patchProperty()` patches a DOM node property.
+export function patchProperty(
+  node: Node,
+  key: string,
+  oldValue: unknown,
+  newValue: unknown,
+  listener: EventListener,
+  isSvg: boolean,
+): void
+
+// `createNode()` creates a DOM node from a VNode.
+export function createNode(vdom: VNode<unknown>, listener: EventListener, isSvg: boolean): Node
+
+// `patch()` patches a DOM node with new VNode children.
+export function patch(
+  parent: Node,
+  node: Node,
+  oldVNode: VNode<unknown> | null | undefined,
+  newVNode: VNode<unknown>,
+  listener: EventListener,
+  isSvg: boolean,
+): Node
+
+// `propsChanged()` checks if any properties changed between two objects.
+export function propsChanged(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+): boolean | undefined
+
+// `maybeVNode()` normalizes a value into a VNode.
+export function maybeVNode<S>(newVNode: MaybeVNode<S>, oldVNode?: VNode<S>): VNode<S>
+
+// `recycleNode()` recycles a DOM node into a VNode.
+export function recycleNode(node: Node): VNode<unknown>
+
+// `createVNode()` creates a virtual DOM node.
+export function createVNode<S>(
+  tag: string | ((data: unknown) => VNode<S>),
+  props: Props<S>,
+  children: readonly MaybeVNode<S>[],
+  type: 1 | 3,
+  node: Node | null | undefined,
+): VNode<S>
+
 // `h()` builds a virtual DOM node.
 export function h<S, C = unknown, T extends string = string>(
   tag: NonEmptyString<T>,
