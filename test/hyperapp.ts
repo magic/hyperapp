@@ -1,7 +1,8 @@
+import type { VNode, Subscription } from '../src/hyperapp.d.mts'
+
 import type { Test } from '@magic/test'
 import { is } from '@magic/test'
 
-import type { VNode, Subscription } from '../src/hyperapp.d.mts'
 import {
   app,
   createClass,
@@ -398,7 +399,9 @@ export default [
   },
   {
     fn: () => {
-      const el = document.createElement('div') as HTMLDivElement & { events?: Record<string, unknown> }
+      const el = document.createElement('div') as HTMLDivElement & {
+        events?: Record<string, unknown>
+      }
       const listener = () => {}
       patchProperty(el, 'onclick', null, listener, listener, false)
       return el.events !== undefined && el.events.click === listener
@@ -408,7 +411,9 @@ export default [
   },
   {
     fn: () => {
-      const el = document.createElement('div') as HTMLDivElement & { events: Record<string, unknown> }
+      const el = document.createElement('div') as HTMLDivElement & {
+        events: Record<string, unknown>
+      }
       const listener = () => {}
       patchProperty(el, 'onclick', null, listener, listener, false)
       patchProperty(el, 'onclick', listener, null, listener, false)
@@ -613,8 +618,20 @@ export default [
       const parent = host()
       const textNode = document.createTextNode('old')
       parent.appendChild(textNode)
-      const oldV = { tag: 'old', props: {}, children: [], type: 3, node: textNode } as unknown as VNode<unknown>
-      const newV = { tag: 'new', props: {}, children: [], type: 3, node: textNode } as unknown as VNode<unknown>
+      const oldV = {
+        tag: 'old',
+        props: {},
+        children: [],
+        type: 3,
+        node: textNode,
+      } as unknown as VNode<unknown>
+      const newV = {
+        tag: 'new',
+        props: {},
+        children: [],
+        type: 3,
+        node: textNode,
+      } as unknown as VNode<unknown>
       patch(parent, textNode, oldV, newV, () => {}, false)
       return textNode.nodeValue === 'new'
     },
@@ -626,7 +643,13 @@ export default [
       const parent = host()
       const oldEl = document.createElement('span')
       parent.appendChild(oldEl)
-      const oldV = { tag: 'span', props: {}, children: [], type: 1, node: oldEl } as unknown as VNode<unknown>
+      const oldV = {
+        tag: 'span',
+        props: {},
+        children: [],
+        type: 1,
+        node: oldEl,
+      } as unknown as VNode<unknown>
       const newV = h('div', {}, [])
       patch(parent, oldEl, oldV, newV, () => {}, false)
       return parent.querySelector('span') === null && parent.querySelector('div') !== null
@@ -639,8 +662,20 @@ export default [
       const parent = host()
       const el = document.createElement('p')
       parent.appendChild(el)
-      const oldV = { tag: 'p', props: {}, children: [], type: 1, node: el } as unknown as VNode<unknown>
-      const newV = { tag: 'p', props: {}, children: [], type: 1, node: el } as unknown as VNode<unknown>
+      const oldV = {
+        tag: 'p',
+        props: {},
+        children: [],
+        type: 1,
+        node: el,
+      } as unknown as VNode<unknown>
+      const newV = {
+        tag: 'p',
+        props: {},
+        children: [],
+        type: 1,
+        node: el,
+      } as unknown as VNode<unknown>
       patch(parent, el, oldV, newV, () => {}, false)
       return parent.childNodes.length === 1
     },
@@ -652,7 +687,13 @@ export default [
       const parent = host()
       const el = document.createElement('p')
       parent.appendChild(el)
-      const oldV = { tag: 'p', props: {}, children: [], type: 1, node: el } as unknown as VNode<unknown>
+      const oldV = {
+        tag: 'p',
+        props: {},
+        children: [],
+        type: 1,
+        node: el,
+      } as unknown as VNode<unknown>
       const newV = h('p', { id: 'added' }, [text('c')])
       patch(parent, el, oldV, newV, () => {}, false)
       return el.id === 'added' && el.innerHTML === 'c'

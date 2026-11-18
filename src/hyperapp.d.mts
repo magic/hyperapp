@@ -249,7 +249,7 @@ export type Subscription<S, P = unknown> = readonly [
 ]
 
 // An unsubscribe function cleans up a canceled subscription.
-export type Unsubscribe = () => void;
+export type Unsubscribe = () => void
 
 // A virtual DOM node (a.k.a. VNode) represents an actual DOM element.
 export type ElementVNode<S> = {
