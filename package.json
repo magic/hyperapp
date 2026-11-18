@@ -43,7 +43,7 @@
   "devDependencies": {
     "@magic/format": "0.0.82",
     "@magic/lint": "0.0.6",
-    "@magic/test": "0.3.57",
+    "@magic/test": "0.3.59",
     "typescript": "npm:@typescript/typescript6"
   }
 }
