@@ -272,7 +272,7 @@ export default [
   {
     fn: () => {
       const v = h('div', {}, 'single')
-      return v.children.length === 1 && v.children[0] === 'single'
+      return v.children.length === 1 && v.children[0].tag === 'single' && v.children[0].type === 3
     },
     expect: true,
     info: 'h: single child is wrapped in an array',
@@ -349,6 +349,30 @@ export default [
     },
     expect: true,
     info: 'maybeVNode: old node without memo recomputes',
+  },
+  {
+    fn: () => {
+      const vnode = maybeVNode('hello')
+      return vnode.tag === 'hello' && vnode.type === 3 && Array.isArray(vnode.children)
+    },
+    expect: true,
+    info: 'maybeVNode: raw string becomes a text vnode',
+  },
+  {
+    fn: () => {
+      const vnode = maybeVNode(42)
+      return vnode.tag === 42 && vnode.type === 3
+    },
+    expect: true,
+    info: 'maybeVNode: raw number becomes a text vnode',
+  },
+  {
+    fn: () => {
+      const vnode = maybeVNode('x')
+      return vnode.type === 3 && vnode.children.length === 0
+    },
+    expect: true,
+    info: 'maybeVNode: string text vnode has empty children',
   },
 
   // ---- patchProperty ----------------------------------------------------
@@ -514,6 +538,44 @@ export default [
     },
     expect: true,
     info: 'createNode: falsy children become empty text nodes',
+  },
+  {
+    fn: () => {
+      const v = h('div', {}, ['raw string', 42, h('span', {}, [])])
+      return (
+        v.children.length === 3 &&
+        v.children[0].type === 3 &&
+        v.children[0].tag === 'raw string' &&
+        v.children[1].type === 3 &&
+        String(v.children[1].tag) === '42' &&
+        v.children[2].tag === 'span'
+      )
+    },
+    expect: true,
+    info: 'h: raw string and number children become text vnodes',
+  },
+  {
+    fn: () => {
+      const li = () => h('li', {}, [text('item')])
+      const v = h('ul', {}, [li(), [li(), li()], [[li()]]])
+      return v.children.length === 4 && v.children.every(child => child.tag === 'li')
+    },
+    expect: true,
+    info: 'h: nested fragment arrays are flattened',
+  },
+  {
+    fn: () => {
+      const shared = [h('span', {}, [text('a')]), 'b']
+      const v = h('div', {}, shared)
+      return (
+        v.children.length === 2 &&
+        v.children[0] === shared[0] &&
+        v.children[1].tag === 'b' &&
+        v.children[1].type === 3
+      )
+    },
+    expect: true,
+    info: 'h: children are textified: vnodes kept by reference, strings become text vnodes',
   },
   {
     fn: () => {
@@ -906,6 +968,40 @@ export default [
     },
     expect: true,
     info: 'app: renders into the mount node',
+  },
+  {
+    fn: async () => {
+      const node = host()
+      app({
+        node,
+        view: () => h('div', { id: 'root' }, ['hello', ' world']),
+      })
+      await frame()
+      return node.innerHTML === 'hello world'
+    },
+    expect: true,
+    info: 'app: raw string children render as text',
+  },
+  {
+    fn: async () => {
+      const node = host()
+      const dispatch = app({
+        node,
+        view: state => h('div', { id: 'root' }, [String(state.count)]),
+        init: { count: 0 },
+      })
+      await frame()
+      const firstTextNode = node.firstChild as Text
+      dispatch({ count: 1 })
+      await frame()
+      return (
+        node.innerHTML === '1' &&
+        node.firstChild === firstTextNode &&
+        firstTextNode.nodeValue === '1'
+      )
+    },
+    expect: true,
+    info: 'app: raw string child patches in place without re-creating the node',
   },
   {
     fn: async () => {
