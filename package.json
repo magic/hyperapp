@@ -1,6 +1,6 @@
 {
   "name": "@magic/hyperapp",
-  "version": "2.0.4-alpha.0.7",
+  "version": "2.0.22-alpha.0",
   "description": "Fork of the tiny framework for building web interfaces. use hyperapp instead!",
   "keywords": [
     "framework",
