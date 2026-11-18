@@ -1,6 +1,7 @@
 import type { Test } from '@magic/test'
 import { is } from '@magic/test'
 
+import type { VNode, Subscription } from '../src/hyperapp.d.mts'
 import {
   app,
   createClass,
@@ -104,7 +105,7 @@ export default [
       const listener = () => () => {
         unsub.n++
       }
-      const out = patchSubs([], [[listener, { n: 1 }, null]], () => {})
+      const out = patchSubs([], [[listener, { n: 1 }, null]] as Subscription<unknown>[], () => {})
       return out.length === 1 && out[0][0] === listener
     },
     expect: true,
@@ -114,8 +115,8 @@ export default [
     fn: () => {
       const u1 = () => {}
       const listener = () => u1
-      const old = [[listener, { n: 1 }, u1]]
-      const out = patchSubs(old, [[listener, { n: 1 }, null]], () => {})
+      const old: Subscription<unknown>[] = [[listener, { n: 1 }, u1]]
+      const out = patchSubs(old, [[listener, { n: 1 }, null]] as Subscription<unknown>[], () => {})
       return out[0] === old[0]
     },
     expect: true,
@@ -181,7 +182,7 @@ export default [
         disposed++
       }
       const listener = () => u1
-      patchSubs([[listener, { n: 1 }, u1]], () => {})
+      patchSubs([[listener, { n: 1 }, u1]], undefined, () => {})
       return disposed === 1
     },
     expect: true,
@@ -313,7 +314,7 @@ export default [
   },
   {
     fn: () => {
-      const view = d => h('span', {}, [text(String(d.n))])
+      const view = (d: { n: number }) => h('span', {}, [text(String(d.n))])
       const fresh = maybeVNode(memo(view, { n: 1 }))
       return fresh !== undefined && fresh.memo !== undefined
     },
@@ -322,7 +323,7 @@ export default [
   },
   {
     fn: () => {
-      const view = d => h('span', {}, [text(String(d.n))])
+      const view = (d: { n: number }) => h('span', {}, [text(String(d.n))])
       const cached = maybeVNode(memo(view, { n: 1 }))
       const again = maybeVNode(memo(view, { n: 1 }), cached)
       return again === cached
@@ -332,7 +333,7 @@ export default [
   },
   {
     fn: () => {
-      const view = d => h('span', {}, [text(String(d.n))])
+      const view = (d: { n: number }) => h('span', {}, [text(String(d.n))])
       const cached = maybeVNode(memo(view, { n: 1 }))
       const recomputed = maybeVNode(memo(view, { n: 2 }), cached)
       return recomputed !== cached && recomputed.memo !== undefined
@@ -342,7 +343,7 @@ export default [
   },
   {
     fn: () => {
-      const view = d => h('span', {}, [text(String(d.n))])
+      const view = (d: { n: number }) => h('span', {}, [text(String(d.n))])
       const plain = h('span', {}, [])
       const recomputed = maybeVNode(memo(view, { n: 1 }), plain)
       return recomputed !== plain
@@ -397,7 +398,7 @@ export default [
   },
   {
     fn: () => {
-      const el = document.createElement('div')
+      const el = document.createElement('div') as HTMLDivElement & { events?: Record<string, unknown> }
       const listener = () => {}
       patchProperty(el, 'onclick', null, listener, listener, false)
       return el.events !== undefined && el.events.click === listener
@@ -407,7 +408,7 @@ export default [
   },
   {
     fn: () => {
-      const el = document.createElement('div')
+      const el = document.createElement('div') as HTMLDivElement & { events: Record<string, unknown> }
       const listener = () => {}
       patchProperty(el, 'onclick', null, listener, listener, false)
       patchProperty(el, 'onclick', listener, null, listener, false)
@@ -506,7 +507,7 @@ export default [
   {
     fn: () => {
       const v = h('div', { id: 'root' }, [h('span', {}, [text('hi')])])
-      const node = createNode(v, () => {}, false)
+      const node = createNode(v, () => {}, false) as HTMLElement
       return node.tagName === 'DIV' && node.innerHTML === '<span>hi</span>'
     },
     expect: true,
@@ -524,7 +525,7 @@ export default [
   {
     fn: () => {
       const v = h('svg', {}, [h('circle', { r: '5' }, [])])
-      const node = createNode(v, () => {}, false)
+      const node = createNode(v, () => {}, false) as HTMLElement
       return node.namespaceURI === 'http://www.w3.org/2000/svg'
     },
     expect: true,
@@ -580,7 +581,7 @@ export default [
   {
     fn: () => {
       const v = h('div', { is: 'x-thing' }, [text('hi')])
-      const node = createNode(v, () => {}, false)
+      const node = createNode(v, () => {}, false) as HTMLElement
       return node.tagName === 'DIV'
     },
     expect: true,
@@ -589,7 +590,7 @@ export default [
   {
     fn: () => {
       const v = h('svg', { is: 'x-thing' }, [h('circle', {}, [])])
-      const node = createNode(v, () => {}, false)
+      const node = createNode(v, () => {}, false) as HTMLElement
       return node.namespaceURI === 'http://www.w3.org/2000/svg'
     },
     expect: true,
@@ -601,7 +602,7 @@ export default [
     fn: () => {
       const parent = host()
       const newV = h('p', { id: 'x' }, [text('hi')])
-      patch(parent, null, null, newV, () => {}, false)
+      patch(parent, null as unknown as Node, null, newV, () => {}, false)
       return parent.innerHTML === '<p id="x">hi</p>'
     },
     expect: true,
@@ -612,8 +613,8 @@ export default [
       const parent = host()
       const textNode = document.createTextNode('old')
       parent.appendChild(textNode)
-      const oldV = { tag: 'old', props: {}, children: [], type: 3, node: textNode }
-      const newV = { tag: 'new', props: {}, children: [], type: 3, node: textNode }
+      const oldV = { tag: 'old', props: {}, children: [], type: 3, node: textNode } as unknown as VNode<unknown>
+      const newV = { tag: 'new', props: {}, children: [], type: 3, node: textNode } as unknown as VNode<unknown>
       patch(parent, textNode, oldV, newV, () => {}, false)
       return textNode.nodeValue === 'new'
     },
@@ -625,7 +626,7 @@ export default [
       const parent = host()
       const oldEl = document.createElement('span')
       parent.appendChild(oldEl)
-      const oldV = { tag: 'span', props: {}, children: [], type: 1, node: oldEl }
+      const oldV = { tag: 'span', props: {}, children: [], type: 1, node: oldEl } as unknown as VNode<unknown>
       const newV = h('div', {}, [])
       patch(parent, oldEl, oldV, newV, () => {}, false)
       return parent.querySelector('span') === null && parent.querySelector('div') !== null
@@ -638,8 +639,8 @@ export default [
       const parent = host()
       const el = document.createElement('p')
       parent.appendChild(el)
-      const oldV = { tag: 'p', props: {}, children: [], type: 1, node: el }
-      const newV = { tag: 'p', props: {}, children: [], type: 1, node: el }
+      const oldV = { tag: 'p', props: {}, children: [], type: 1, node: el } as unknown as VNode<unknown>
+      const newV = { tag: 'p', props: {}, children: [], type: 1, node: el } as unknown as VNode<unknown>
       patch(parent, el, oldV, newV, () => {}, false)
       return parent.childNodes.length === 1
     },
@@ -651,7 +652,7 @@ export default [
       const parent = host()
       const el = document.createElement('p')
       parent.appendChild(el)
-      const oldV = { tag: 'p', props: {}, children: [], type: 1, node: el }
+      const oldV = { tag: 'p', props: {}, children: [], type: 1, node: el } as unknown as VNode<unknown>
       const newV = h('p', { id: 'added' }, [text('c')])
       patch(parent, el, oldV, newV, () => {}, false)
       return el.id === 'added' && el.innerHTML === 'c'
@@ -672,7 +673,7 @@ export default [
         children: [{ tag: 'i', props: {}, children: [], type: 1, node: child }],
         type: 1,
         node: el,
-      }
+      } as unknown as VNode<unknown>
       const newV = h('p', {}, [])
       patch(parent, el, oldV, newV, () => {}, false)
       return el.childNodes.length === 0
@@ -842,7 +843,13 @@ export default [
       oldB.node = b
       // Array-like children list: .length is 1 but index 1 still resolves,
       // so new children insert before that trailing node instead of appending.
-      const oldV = { tag: 'p', props: {}, children: { 0: oldA, 1: oldB, length: 1 }, node: el }
+      const oldV = {
+        tag: 'p',
+        props: {},
+        children: { 0: oldA, 1: oldB, length: 1 },
+        type: 1,
+        node: el,
+      } as unknown as VNode<unknown>
       const newV = h('p', {}, [h('i', { key: 'a' }, []), h('i', { key: 'x' }, [])])
       patch(parent, el, oldV, newV, () => {}, false)
       return el.childNodes.length === 3 && el.lastChild === b

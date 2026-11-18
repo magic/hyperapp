@@ -267,7 +267,7 @@ export default [
   {
     fn: () => {
       const read = renderer(() => ['a', 'b', 'c', 'd', 'e', 'f'], null, dispatch)
-      return read(2) + read(2) + read(2)
+      return read(2)! + read(2)! + read(2)!
     },
     expect: 'abcdef',
     info: 'renderer: honors the byte budget across calls',
